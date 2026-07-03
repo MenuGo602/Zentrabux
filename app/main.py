@@ -98,7 +98,6 @@ app.include_router(documents.router,    prefix=PREFIX, tags=["Documents"])
 app.include_router(customers.router,    prefix=PREFIX, tags=["Customers"])
 app.include_router(suppliers.router,    prefix=PREFIX, tags=["Suppliers"])
 
-
 # ─── Health Check ────────────────────────────────────────────────────────────
 @app.get("/health", tags=["System"])
 async def health_check():
@@ -108,11 +107,14 @@ async def health_check():
         "version": "0.1.0",
         "environment": settings.ENVIRONMENT,
     }
-    @app.get("/", tags=["System"])
+
+
+@app.get("/", tags=["System"])
 async def root():
     return {
         "status": "ok",
         "message": "Zentra API is running",
         "docs": "/docs",
-        "health": "/health"
-}
+        "health": "/health",
+    }
+
