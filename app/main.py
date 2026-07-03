@@ -108,3 +108,11 @@ async def health_check():
         "version": "0.1.0",
         "environment": settings.ENVIRONMENT,
     }
+    @app.get("/", tags=["System"])
+async def root():
+    return {
+        "status": "ok",
+        "message": "Zentra API is running",
+        "docs": "/docs",
+        "health": "/health"
+}
