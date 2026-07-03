@@ -1,0 +1,71 @@
+/*
+  Zentra Dashboard — dizayn tokenlari.
+
+  Yo'nalish: "Ledger, tunda ochiq". Buxgalteriya kitobi — aniqlik va ishonch
+  haqida, shuning uchun bezaksiz, raqamlarga e'tibor qaratilgan, chuqur
+  "siyoh" foni bilan. Aksent rang — pul/o'sish uchun bosilgan zumrad, ogohlantirish
+  uchun amber.
+
+  Signature: "Balance Beam" — Aktivlar = Majburiyatlar + Kapital tenglamasini
+  bevosita ko'rsatuvchi tarozi animatsiyasi (BalanceBeam.jsx komponentida).
+*/
+
+:root {
+  /* ─── Rang: "Ledger Midnight" ─────────────────────────────── */
+  --bg: #0e1318;
+  --bg-elevated: #171e24;
+  --bg-elevated-hover: #1d252c;
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.14);
+
+  --ink: #edf1f2;
+  --ink-muted: #8b98a3;
+  --ink-faint: #5b6670;
+
+  --accent: #3ed598;       /* Foyda, ijobiy o'zgarish */
+  --accent-dim: #2a8f68;
+  --accent-wash: rgba(62, 213, 152, 0.12);
+
+  --warn: #f2a93b;         /* Kutilayotgan, muddat yaqinlashgan */
+  --warn-wash: rgba(242, 169, 59, 0.12);
+
+  --danger: #f0616b;       /* Xarajat, muddati o'tgan */
+  --danger-wash: rgba(240, 97, 107, 0.12);
+
+  /* ─── Tipografiya ─────────────────────────────────────────── */
+  --font-ui: "Manrope", -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-hero: 2.5rem;
+
+  /* ─── Bo'shliq va shakl ───────────────────────────────────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-8: 48px;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+
+  --max-width: 480px; /* Mini App / mobil dashboard kengligi */
+}
+
+/* Telegram WebApp ichida ochilganda — Telegram'ning o'z mavzu ranglarini
+   ustunlik bilan qo'llaymiz, shunda ilova Telegram ichida "begona" ko'rinmaydi. */
+.tg-themed {
+  --bg: var(--tg-theme-bg-color, var(--bg));
+  --bg-elevated: var(--tg-theme-secondary-bg-color, var(--bg-elevated));
+  --ink: var(--tg-theme-text-color, var(--ink));
+  --ink-muted: var(--tg-theme-hint-color, var(--ink-muted));
+  --accent: var(--tg-theme-button-color, var(--accent));
+}

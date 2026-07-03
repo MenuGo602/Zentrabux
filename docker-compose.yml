@@ -1,0 +1,162 @@
+version: "3.9"
+
+services:
+  # ─── Database ───────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: zentra_postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-zentra}
+      POSTGRES_USER: ${POSTGRES_USER:-zentra}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-zentra_secret}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-zentra}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ─── Redis ──────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: zentra_redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis_secret}
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "${REDIS_PASSWORD:-redis_secret}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ─── FastAPI ────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: zentra_api
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - .:/app
+      - ./uploads:/app/uploads
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-zentra}:${POSTGRES_PASSWORD:-zentra_secret}@postgres:5432/${POSTGRES_DB:-zentra}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_secret}@redis:6379/0
+      - SECRET_KEY=${SECRET_KEY:-change_me_in_production}
+      - ENVIRONMENT=development
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ─── Celery Worker ──────────────────────────────────────
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: zentra_worker
+    command: celery -A app.tasks.celery_app worker --loglevel=info --concurrency=4
+    volumes:
+      - .:/app
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-zentra}:${POSTGRES_PASSWORD:-zentra_secret}@postgres:5432/${POSTGRES_DB:-zentra}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_secret}@redis:6379/0
+      - SECRET_KEY=${SECRET_KEY:-change_me_in_production}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ─── Celery Beat (Scheduler) ────────────────────────────
+  beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: zentra_beat
+    command: celery -A app.tasks.celery_app beat --loglevel=info
+    volumes:
+      - .:/app
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-zentra}:${POSTGRES_PASSWORD:-zentra_secret}@postgres:5432/${POSTGRES_DB:-zentra}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_secret}@redis:6379/0
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  # ─── Telegram Bot ───────────────────────────────────────
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: zentra_bot
+    command: python -m app.bot.main
+    volumes:
+      - .:/app
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-zentra}:${POSTGRES_PASSWORD:-zentra_secret}@postgres:5432/${POSTGRES_DB:-zentra}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_secret}@redis:6379/0
+      - BOT_TOKEN=${BOT_TOKEN:-your_bot_token}
+      - API_BASE_URL=http://api:8000
+    depends_on:
+      - api
+    restart: unless-stopped
+    profiles:
+      - bot  # faqat kerak bo'lganda: docker compose --profile bot up
+
+  # ─── Flower (Celery monitoring) ─────────────────────────
+  flower:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: zentra_flower
+    command: celery -A app.tasks.celery_app flower --port=5555
+    ports:
+      - "5555:5555"
+    environment:
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_secret}@redis:6379/0
+    depends_on:
+      - redis
+    profiles:
+      - monitoring
+
+  # ─── Veb Dashboard (React + Vite) ────────────────────────
+  frontend:
+    image: node:22-alpine
+    container_name: zentra_frontend
+    working_dir: /app
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    volumes:
+      - ./frontend:/app
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8000
+      - VITE_BOT_USERNAME=${BOT_USERNAME:-zentra_bot}
+    depends_on:
+      - api
+    restart: unless-stopped
+    profiles:
+      - frontend  # faqat kerak bo'lganda: docker compose --profile frontend up
+
+volumes:
+  postgres_data:
+  redis_data:

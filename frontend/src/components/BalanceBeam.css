@@ -1,0 +1,78 @@
+.balance-beam {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-5) var(--space-4);
+}
+
+.balance-beam__svg {
+  overflow: visible;
+}
+
+.balance-beam__arm {
+  transform-origin: 100px 40px; /* Tirgak (fulcrum) nuqtasi */
+  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.balance-beam__arm--settling {
+  animation: beam-settle 0.9s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.balance-beam__arm--unbalanced {
+  animation: beam-wobble 2.4s ease-in-out infinite;
+}
+
+@keyframes beam-settle {
+  0% {
+    transform: rotate(-14deg);
+  }
+  55% {
+    transform: rotate(4deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes beam-wobble {
+  0%,
+  100% {
+    transform: rotate(-4deg);
+  }
+  50% {
+    transform: rotate(4deg);
+  }
+}
+
+.balance-beam__status {
+  margin-top: var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.balance-beam__status--ok {
+  color: var(--accent);
+}
+
+.balance-beam__status--warn {
+  color: var(--danger);
+}
+
+.balance-beam__figures {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .balance-beam__arm--settling,
+  .balance-beam__arm--unbalanced {
+    animation: none;
+  }
+}
